@@ -1,58 +1,149 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Delivery Bot
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A multi-tenant delivery management platform built with Laravel and Filament, combining a web-based admin/operator panel with a Telegram bot for order intake and customer interaction.
 
-## About Laravel
+## Overview
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Delivery Bot lets multiple businesses (tenants) manage their own delivery operations independently through a shared platform. Each tenant's team can process incoming orders, coordinate operators, and communicate with customers via Telegram — all backed by real-time, event-driven notifications.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Multi-tenant architecture** — isolated data and configuration per tenant
+- **Multi-panel admin interface** (Filament 5)
+    - **Superadmin panel** — manage tenants, global settings, and platform-level configuration
+    - **Operator panel** — day-to-day order handling, delivery assignment, and customer communication
+- **Role-based access control** via Spatie Laravel-Permission + Filament Shield
+- **Telegram bot integration** (Nutgram) for customer-facing order conversations
+    - `OrderConversation` flow guides customers through placing and tracking orders directly in Telegram
+- **Asynchronous job processing** via RabbitMQ (`vladimir-yuldashev/laravel-queue-rabbitmq`)
+- **Event-driven notifications** — order status changes, assignments, and updates propagate in real time to relevant users and Telegram chats
+- **Redis** for caching, session storage, and queue backing (separate named connections/database indices per use case)
 
-## Learning Laravel
+## Tech Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| Layer                          | Technology                                         |
+| ------------------------------ | -------------------------------------------------- |
+| Framework                      | Laravel 12                                         |
+| Admin UI                       | Filament 5                                         |
+| Roles & Permissions            | Spatie Laravel-Permission, Filament Shield         |
+| Telegram Bot                   | Nutgram                                            |
+| Queue                          | RabbitMQ (`php-amqplib`, `laravel-queue-rabbitmq`) |
+| Cache / Sessions / Queue store | Redis                                              |
+| Frontend build                 | Vite                                               |
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Requirements
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- PHP 8.2+
+- Composer
+- MySQL / MariaDB
+- Redis
+- RabbitMQ
+- Node.js & npm
+- PHP extensions: `sockets` (required by `php-amqplib` for RabbitMQ), `exif` (required by Filament Curator, if used)
 
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Installation
 
 ```bash
-composer require laravel/boost --dev
+git clone https://github.com/MacTavish27/delivery-bot.git
+cd delivery-bot
 
-php artisan boost:install
+composer install
+npm install
+
+cp .env.example .env
+php artisan key:generate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Configure your `.env` file:
 
-## Contributing
+```env
+APP_URL=http://127.0.0.1:8000
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=delivery_bot
+DB_USERNAME=root
+DB_PASSWORD=
 
-## Code of Conduct
+REDIS_HOST=127.0.0.1
+REDIS_CACHE_DB=1
+REDIS_SESSION_DB=2
+REDIS_QUEUE_DB=3
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+QUEUE_CONNECTION=rabbitmq
+RABBITMQ_HOST=127.0.0.1
+RABBITMQ_PORT=5672
+RABBITMQ_USER=guest
+RABBITMQ_PASSWORD=guest
 
-## Security Vulnerabilities
+TELEGRAM_BOT_TOKEN=your-bot-token-here
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Run migrations and seed initial data:
+
+```bash
+php artisan migrate
+php artisan shield:generate --all
+php artisan db:seed --class=SuperAdminSeeder
+```
+
+Build frontend assets:
+
+```bash
+npm run dev
+# or for production
+npm run build
+```
+
+Start the queue worker (RabbitMQ):
+
+```bash
+php artisan queue:work rabbitmq
+```
+
+Run the local dev server:
+
+```bash
+php artisan serve
+```
+
+## Panels
+
+| Panel      | URL (default) | Purpose                                 |
+| ---------- | ------------- | --------------------------------------- |
+| Superadmin | `/admin`      | Tenant management, global configuration |
+| Operator   | `/operator`   | Order processing, delivery coordination |
+
+## Roles
+
+Managed via Filament Shield. Default roles include:
+
+- `super_admin` — full platform access across all tenants
+- `operator` — tenant-scoped order and delivery management
+
+Roles and permissions can be regenerated after adding new resources:
+
+```bash
+php artisan shield:generate --all
+php artisan permission:cache-reset
+```
+
+## Telegram Bot
+
+The bot uses [Nutgram](https://nutgram.laravel-notification-channels.com/) to handle customer interactions. The core `OrderConversation` class walks customers through:
+
+1. Starting a new order
+2. Collecting delivery details
+3. Confirming and submitting the order
+4. Receiving real-time status updates as the order progresses
+
+## Development Notes
+
+- If `composer update` fails on `ext-sockets`, enable the `sockets` extension in `php.ini` (required by `php-amqplib` for RabbitMQ support).
+- Redis is configured with separate database indices for cache, session, and queue to avoid key collisions between subsystems.
+- After seeding roles/permissions, always run `php artisan permission:cache-reset` — Spatie's permission cache does not refresh automatically within the same request/session.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Proprietary — internal project. Not licensed for public distribution.
