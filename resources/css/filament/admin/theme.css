@@ -1,0 +1,44 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+@source '../../../../vendor/jeffgreco13/filament-breezy/resources/**/*';
+@source '../../../../vendor/bezhansalleh/filament-language-switch/resources/views/**/*.blade.php';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../resources/views/filament/**/*';
+@source '../../../../resources/views/livewire/**/*';
+
+/* SCROLLBAR */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--primary-400)) transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--primary-400));
+    border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--primary-500));
+}
+
+/* DARK MODE */
+.dark * {
+    scrollbar-color: rgb(var(--primary-500)) transparent;
+}
+
+.dark *::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--primary-500));
+}
+
+.dark *::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--primary-400));
+}
