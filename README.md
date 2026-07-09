@@ -146,4 +146,4 @@ The bot uses [Nutgram](https://nutgram.laravel-notification-channels.com/) to ha
 
 ## License
 
-Proprietary — internal project. Not licensed for public distribution.
+MIT License.
